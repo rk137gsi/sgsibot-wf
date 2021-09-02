@@ -1,0 +1,52 @@
+# This is a basic workflow to help you get started with Actions
+
+name: SGSI_Build
+
+on: 
+    push:
+    workflow_dispatch:
+    
+env:              
+  ROM_URL: 'https://www.priiiyocloud.workers.dev/0://blueline-spb1.210331.013-factory-517d58c9/blueline-spb1.210331.013/image-blueline-spb1.210331.013.zip'
+  ZIP_NAME: 'update.zip'
+  OS_TYPE: 'Pixel'
+  BUILD_TYPE: 'ab'
+  REPACK_NAME: 'Blueline_Beta_SGSI.zip'
+  VERSION: '12'
+  upload _SourceForge: 'true'
+  upload_WeTransfer: 'true'
+  upload_action-gh-release: 'true'
+  SETUP: 'true'
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+       - name: Checkout
+         uses: actions/checkout@main
+       
+       - name: Clean Up
+         run: |       
+           sudo -E apt-get update
+           sudo apt install expect -y
+           
+       - name: Upload SGSI to SourceForge
+         continue-on-error: true
+         run: |
+             pwd
+             expect -c "
+             spawn sftp ${{ secrets.SFUSER }}@frs.sourceforge.net
+             expect \"yes/no\"
+             send \"yes\r\"
+             expect \"Password\"        
+             send \"${{ secrets.SFPASS }}\r\"
+             expect \"sftp> \"
+             send \"cd ${{ secrets.SFDIR }}\r\"
+             set timeout -1
+             send \"put $REPACK_NAME.zip\r\"
+             expect \"Uploading\"
+             expect \"100%\"
+             expect \"sftp>\"
+             send \"bye\r\"
+             interact"
